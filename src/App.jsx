@@ -16,10 +16,12 @@ function App() {
   const [newStudentId, setNewStudentId] = useState("");
   const [StudentId, setStudentId] = useState("");
   const [message1, setMessage1] = useState("");
-  const [message, setMessage] = useState("Connect-Wallet to Mint the Student");
+  const [message, setMessage] = useState("");
   const [transactionHash, setTransactionHash] = useState("");
+  // eslint-disable-next-line
   const [tokenadd, setTokenadd] = useState("");
   const [allStudents, setAllStudents] = useState([]);
+  // eslint-disable-next-line
   const [provider, setProvider] = useState(null);
   const [contract, setContract] = useState(null);
   const [account, setAccount] = useState(null);
@@ -239,7 +241,45 @@ function App() {
       alert("Error getting all students:", error);
     }
   };
+  const initializeContract = async () => {
+    try {
+      if (!window.ethereum) {
+        alert("Please install MetaMask or use a Web3-enabled browser.");
+        return;
+      }
 
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+
+      const initializedContract = new ethers.Contract(
+        contractAddress,
+        contractABI,
+        signer
+      );
+
+      setProvider(provider);
+      setContract(initializedContract);
+
+      alert("Contract initialized successfully!");
+    } catch (error) {
+      console.error("Error initializing contract:", error);
+      alert(
+        "Failed to initialize the contract. Please check the console for errors."
+      );
+    }
+  };
+
+  const clear = () => {
+    setNewStudentFirstName("");
+    setNewStudentLastName("");
+    setNewStudentCourse("");
+    setLanguage("");
+    setNewStudentId("");
+    setStudentId("");
+    setMessage1("");
+    setMessage("");
+    setAllStudents([]);
+  };
   return (
     <div className="App">
       {account ? (
@@ -254,6 +294,14 @@ function App() {
 
       {account && (
         <>
+          {!contract && (
+            <Content>
+              <button onClick={initializeContract}>Initialize Contract</button>
+            </Content>
+          )}
+          <Content>
+            <button onClick={clear}>Clear</button>
+          </Content>
           <h1>Issuance Portal</h1>
           <Container>
             <Overlay>
@@ -326,6 +374,7 @@ function App() {
           </Container>
           <Dis>
             <p>{message}</p>
+            <p>{message1}</p>
             <br />
             {allStudents.length > 0 && (
               <table border={1}>
@@ -354,8 +403,14 @@ function App() {
               </table>
             )}
             <br />
-            <p>{message1}</p>
           </Dis>
+          {!account ? (
+            <Dis>Connect-Wallet to Mint the Student</Dis>
+          ) : !contract ? (
+            <Dis>Contract not initialized. Please initialize the contract.</Dis>
+          ) : (
+            <Dis>Ready to Mint</Dis>
+          )}
         </>
       )}
     </div>
